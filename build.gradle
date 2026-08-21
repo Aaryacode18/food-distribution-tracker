@@ -1,0 +1,34 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.vit.tracker'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut"
+    }
+}
+
+jar {
+    archiveBaseName = 'food-distribution-tracker'
+    archiveVersion = '1.0.0'
+    manifest {
+        attributes 'Main-Class': 'com.vit.tracker.App'
+    }
+}
