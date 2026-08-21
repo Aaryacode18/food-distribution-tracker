@@ -9,7 +9,7 @@ public class AppTest {
     public void testAddStock() {
         App app = new App();
         int result = app.addStock(20, 3);
-        System.out.println("Checking App.addStock(20, 3), expected wrong value for CI failure demo.");
-        assertEquals(24, result);
+        System.out.println("TEST PASSED: App.addStock(20, 3) returned " + result + ".");
+        assertEquals(23, result);
     }
 }
