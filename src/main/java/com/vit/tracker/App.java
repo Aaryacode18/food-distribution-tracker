@@ -2,14 +2,26 @@ package com.vit.tracker;
 
 public class App {
 
-    public int addStock(int currentStock, int incomingUnits) {
-        return currentStock + incomingUnits;
-    }
-
     public static void main(String[] args) {
-        App app = new App();
-        int updatedStock = app.addStock(20, 3);
-        System.out.println("Jenkins Food Distribution Tracker CI demo is running.");
-        System.out.println("20 + 3 = " + updatedStock);
+        FoodDistributionTracker tracker = new FoodDistributionTracker();
+
+        DistributionCenter warehouse = new DistributionCenter("C1", "Central Warehouse");
+        DistributionCenter centerA = new DistributionCenter("C2", "Downtown Center");
+
+        tracker.addStock(warehouse.getId(), "Rice (kg)", 500);
+        System.out.println("Stock at " + warehouse + ": " +
+                tracker.getStockLevel(warehouse.getId(), "Rice (kg)") + " kg Rice");
+
+        String deliveryId = tracker.createDelivery(warehouse.getId(), centerA.getId(), "Rice (kg)", 100);
+        System.out.println("Created delivery: " + tracker.getDelivery(deliveryId));
+
+        tracker.updateDeliveryStatus(deliveryId, DeliveryStatus.IN_TRANSIT);
+        System.out.println("Updated: " + tracker.getDelivery(deliveryId));
+
+        tracker.updateDeliveryStatus(deliveryId, DeliveryStatus.DELIVERED);
+        System.out.println("Final: " + tracker.getDelivery(deliveryId));
+
+        System.out.println("Stock at " + centerA + ": " +
+                tracker.getStockLevel(centerA.getId(), "Rice (kg)") + " kg Rice");
     }
 }
