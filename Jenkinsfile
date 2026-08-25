@@ -1,8 +1,8 @@
 pipeline {
     agent any
-    tools {
-        jdk 'JDK-21'
-        maven 'Maven-3'
+    environment {
+        JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk-22.jdk/Contents/Home"
+        PATH = "${JAVA_HOME}/bin:/opt/homebrew/bin:${env.PATH}"
     }
     stages {
         stage('Checkout') {
