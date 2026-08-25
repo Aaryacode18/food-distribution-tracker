@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.vit.tracker.AppTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-21T10:50:40.291Z" hostname="Aaryas-MacBook-Air.local" time="0.005">
-  <properties/>
-  <testcase name="testAddStock" classname="com.vit.tracker.AppTest" time="0.003"/>
-  <system-out><![CDATA[TEST PASSED: App.addStock(20, 3) returned 23.
-]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

@@ -1,3 +1,7 @@
 target/
+build/
+ant-build/
+.gradle/
 *.class
 .DS_Store
+gradle_error.log
