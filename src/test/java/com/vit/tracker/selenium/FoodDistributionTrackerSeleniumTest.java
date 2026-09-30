@@ -11,6 +11,7 @@ import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -220,6 +221,9 @@ public class FoodDistributionTrackerSeleniumTest {
 
     // ------------------------------------------------------------------ helpers
 
+    /** Message Chrome uses when the node it is asked about has been discarded. */
+    private static final String NODE_REPLACED = "does not belong to the document";
+
     /**
      * Clicks a control and blocks until the resulting page navigation commits.
      *
@@ -248,7 +252,10 @@ public class FoodDistributionTrackerSeleniumTest {
                 toClick.click();
                 last = null;
                 break;
-            } catch (RuntimeException e) {
+            } catch (WebDriverException e) {
+                if (!isNodeReplaced(e)) {
+                    throw e;
+                }
                 last = e;
                 sleep(500);
             }
@@ -257,7 +264,32 @@ public class FoodDistributionTrackerSeleniumTest {
             throw last;
         }
 
-        wait.until(ExpectedConditions.stalenessOf(marker));
+        // Wait for the old document to actually be discarded.
+        //
+        // Selenium's own stalenessOf() cannot be used here: it probes the node
+        // with isElementEnabled, which surfaces the transient DevTools error
+        // above as a WebDriverException, and wait.until propagates that rather
+        // than polling again. That made the build fail whenever Chrome replied
+        // at the wrong moment. The same condition is probed directly below so
+        // it counts as "navigation happened" instead of as an error.
+        wait.until(d -> {
+            try {
+                marker.isEnabled();
+                return false;
+            } catch (StaleElementReferenceException e) {
+                return true;
+            } catch (WebDriverException e) {
+                if (isNodeReplaced(e)) {
+                    return true;
+                }
+                throw e;
+            }
+        });
+    }
+
+    private static boolean isNodeReplaced(WebDriverException e) {
+        String message = e.getMessage();
+        return message != null && message.contains(NODE_REPLACED);
     }
 
     private static void sleep(long millis) {
