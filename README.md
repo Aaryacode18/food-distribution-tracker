@@ -73,7 +73,11 @@ src/main/java/com/vit/tracker/
 src/main/webapp/
   index.jsp                    the entire UI (markup, CSS, and scriptlets)
 src/test/java/com/vit/tracker/
-  FoodDistributionTrackerTest.java
+  FoodDistributionTrackerTest.java       unit tests
+  selenium/
+    FoodDistributionTrackerSeleniumTest.java  browser tests (`-Pselenium`)
+docs/
+  selenium-test-plan.md
 ```
 
 The web layer is a single JSP. There is no servlet, `web.xml`, or DAO layer.
@@ -81,11 +85,25 @@ The web layer is a single JSP. There is no servlet, `web.xml`, or DAO layer.
 ## Testing
 
 ```bash
+# Unit tests. The Selenium suite is excluded from this run.
 mvn test
 ```
 
 7 JUnit tests cover stock accumulation, delivery creation, status transitions,
 stock crediting on delivery, per-center filtering, and the unknown-delivery error.
+
+Browser tests live in a separate profile so that a plain `mvn test` stays fast
+and needs neither a browser nor a running Tomcat:
+
+```bash
+mvn test -Pselenium
+```
+
+3 Selenium tests cover the three critical journeys: creating a delivery,
+searching and filtering deliveries, and updating status while watching the
+destination inventory update. They run headless in Chrome against the deployed
+application, and capture a screenshot on failure. See
+[`docs/selenium-test-plan.md`](docs/selenium-test-plan.md) for the full plan.
 
 ## Branches
 
