@@ -274,8 +274,7 @@
 
                 String searchText =
                     (d.getId() + " " +
-                     d.getItemName() + " " +
-                     d.getStatus()).toLowerCase();
+                     d.getItemName()).toLowerCase();
 
                 if (!searchText.contains(search.toLowerCase())) {
                     continue;
