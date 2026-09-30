@@ -27,16 +27,18 @@
 
     <h2>Live Inventory</h2>
     <table>
-        <tr><th>Center</th><th>Item</th><th>Stock</th></tr>
+        <tr><th>Center</th><th>Item</th><th>Stock</th><th>Reorder Level</th></tr>
         <tr>
             <td><%= warehouse %></td>
             <td>Rice (kg)</td>
             <td><%= tracker.getStockLevel(warehouse.getId(), "Rice (kg)") %></td>
+            <td>100</td>
         </tr>
         <tr>
             <td><%= centerA %></td>
             <td>Rice (kg)</td>
             <td><%= tracker.getStockLevel(centerA.getId(), "Rice (kg)") %></td>
+            <td>50</td>
         </tr>
     </table>
 
