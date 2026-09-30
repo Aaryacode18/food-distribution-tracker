@@ -118,10 +118,32 @@ into `develop`. Releases are tagged on `main`.
 
 ## CI/CD
 
-`Jenkinsfile` defines a declarative pipeline: Checkout → Compile → Test →
-Package → Deploy → Verify. It copies the WAR into Tomcat's `webapps` directory
-and then health-checks the deployed URL. The job reads `Jenkinsfile` from the
-repository, so pipeline changes are versioned with the code.
+`Jenkinsfile` defines a declarative pipeline, and the job polls the `main` branch
+every two minutes, so every pushed commit builds automatically. The job reads
+`Jenkinsfile` from the repository, so pipeline changes are versioned with the code.
+
+```
+Checkout -> Compile -> Unit Test -> Package -> Deploy to Staging
+         -> Browser Test -> Deploy -> Verify
+```
+
+The browser suite is the release gate. Because Selenium needs a running
+application, the new WAR is first deployed to a throwaway staging context
+(`food-distribution-tracker-staging`) and the suite runs there. The WAR is only
+promoted to the live `food-distribution-tracker` context if every test passes, so
+a failing browser test leaves the live application on the previous build. The
+staging context is removed in a `cleanup` block on any outcome.
+
+Each build publishes both JUnit result sets (7 unit + 3 browser) and archives
+`target/selenium-screenshots/*.png`, which is only non-empty when a browser test
+fails. A failed test therefore stops the build before anything is promoted.
+
+Build parameters (`BRANCH`, `DEPLOY_ENV`, `TOMCAT_WEBAPPS`, `APP_CONTEXT`,
+`STAGING_CONTEXT`, `APP_PORT`, `JAVA_HOME_PATH`, `RUN_SELENIUM`) are editable
+under *Build with Parameters*. Note that Jenkins keeps the last-used value of an
+existing parameter rather than the `defaultValue` in the `Jenkinsfile`, so a
+parameter changed to `true` in the pipeline file still needs to be flipped in the
+job UI once.
 
 ## Known issues
 
