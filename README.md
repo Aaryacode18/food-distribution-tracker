@@ -1,10 +1,16 @@
 # Food Distribution Tracker
 
+[![Jenkins](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Aaryacode18/food-distribution-tracker/main/docs/ci-status.json)](docs/CI-REPORT.md)
+[![Tests](https://img.shields.io/badge/tests-7%20unit%20%2B%203%20browser-blue)](docs/selenium-test-plan.md)
+
 A small Java web application for tracking food stock movements between distribution
 centers. Deliveries are created, moved through a status flow, and summarised on a
 live dashboard.
 
 Built as part of a DevOps coursework project.
+
+> **Quick start:** `./start.sh` builds, deploys, starts Tomcat and Jenkins, and
+> opens the app. See [`DEMO.md`](DEMO.md) for a click-by-click walkthrough.
 
 ## Tech stack
 
@@ -22,8 +28,22 @@ Built as part of a DevOps coursework project.
 - JDK 21 or newer (`java -version`)
 - Maven 3.8+ (`mvn -version`)
 - Apache Tomcat 9+ listening on port **8081**
+- Google Chrome (only for the browser test suite)
 
 ## Build and run
+
+The fast path:
+
+```bash
+./start.sh
+```
+
+That builds, deploys to Tomcat, starts Tomcat and Jenkins if they are not
+already running, waits for both to be healthy, and opens the app. Pass
+`--tests` to also run the browser suite, or `--no-open` to skip opening a
+browser.
+
+Manually:
 
 ```bash
 # 1. Compile, run unit tests, and package the WAR
@@ -43,6 +63,12 @@ console demo instead:
 ```bash
 java -cp target/classes com.vit.tracker.App
 ```
+
+| Service | URL |
+|---|---|
+| Application | <http://localhost:8081/food-distribution-tracker/> |
+| Jenkins (login required) | <http://localhost:8080/> |
+| Jenkins job | <http://localhost:8080/job/Food-Tracker-Pipeline/> |
 
 ## Features
 
@@ -156,6 +182,28 @@ job UI once.
 - Stock is not deducted from the source center when a delivery is created, so
   warehouse totals never decrease.
 - There is no "Add Stock" form, so only the seeded `Rice (kg)` item can exist.
+- `search`, `message`, and `itemName` are written to the page without HTML
+  escaping, so a value containing markup is rendered as markup. Not exploitable
+  today because all input is trusted and coordinator-entered, but it must be
+  fixed before any untrusted input is introduced. Tracked as US-16.
+- Input validation lives in `index.jsp` rather than in the domain service, so
+  the service would accept a negative quantity if called directly.
+- The Jenkins badge above reflects the status recorded in `docs/ci-status.json`,
+  which is committed after each run. It is not a live query, because the Jenkins
+  instance is private and requires a login that a badge service cannot make.
+
+## Documentation
+
+| Document | Covers | Task |
+|---|---|---|
+| [`DEMO.md`](DEMO.md) | Click-by-click walkthrough for demonstrating the app | — |
+| [`docs/problem-statement.md`](docs/problem-statement.md) | Context, problem, scope, success criteria | 1 |
+| [`docs/user-stories-and-backlog.md`](docs/user-stories-and-backlog.md) | User stories, initial backlog, sprint plan, updated backlog | 2, 6 |
+| [`docs/srs.md`](docs/srs.md) | Functional and non-functional requirements, traceability, limitations | 3 |
+| [`README.md`](README.md) | Setup, features, structure, testing, CI/CD | 4 |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branch workflow and PR conventions | 5 |
+| [`docs/selenium-test-plan.md`](docs/selenium-test-plan.md) | Browser test plan and flake analysis | 9 |
+| [`docs/CI-REPORT.md`](docs/CI-REPORT.md) | Pipeline evidence, including a caught defect | 10 |
 
 ## Author
 
