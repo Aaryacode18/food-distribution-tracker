@@ -8,7 +8,12 @@
         tracker = new FoodDistributionTracker();
         session.setAttribute("tracker", tracker);
 
+        // Opening stock for the warehouse, in the units the centre trades in.
         tracker.addStock("C1", "Rice (kg)", 500);
+        tracker.addStock("C1", "Wheat (kg)", 300);
+        tracker.addStock("C1", "Sugar (kg)", 200);
+        tracker.addStock("C1", "Oil (L)", 150);
+        tracker.addStock("C1", "Salt (kg)", 100);
     }
 
     String message = "";
@@ -39,6 +44,39 @@
                 } else {
                     message = "Delivery " + deliveryId + " is already " + all[nextIndex - 1] + ".";
                 }
+            }
+
+        } else if ("addStock".equals(action)) {
+
+            String centerId = request.getParameter("stockCenter");
+            String newItemName = request.getParameter("stockItemName");
+            String newQuantityText = request.getParameter("stockQuantity");
+
+            if (!"C1".equals(centerId) && !"C2".equals(centerId)) {
+                message = "Choose a valid distribution center.";
+            } else if (newItemName == null || newItemName.trim().isEmpty()) {
+                message = "Item name is required.";
+            } else {
+
+                newItemName = newItemName.trim();
+
+                try {
+                    int newQuantity = Integer.parseInt(newQuantityText);
+
+                    if (newQuantity <= 0) {
+                        message = "Quantity must be greater than 0.";
+                    } else {
+                        tracker.addStock(centerId, newItemName, newQuantity);
+
+                        message = "Added " + newQuantity + " of " + newItemName + " at " +
+                                  centerId + ". New stock: " +
+                                  tracker.getStockLevel(centerId, newItemName) + ".";
+                    }
+
+                } catch (NumberFormatException e) {
+                    message = "Invalid quantity. Please enter a valid number.";
+                }
+
             }
 
         } else {
@@ -133,7 +171,7 @@
             background: #f0f0f0;
         }
 
-        input, button {
+        input, button, select {
             padding: 8px;
             margin: 5px;
         }
@@ -158,7 +196,7 @@
         <input
             type="text"
             name="itemName"
-            value="Rice (kg)"
+            placeholder="e.g. Rice (kg)"
             required
         >
 
@@ -173,6 +211,43 @@
 
         <button type="submit">
             Create Delivery
+        </button>
+
+    </form>
+
+    <h2>Add Stock</h2>
+
+    <form method="post">
+
+        <input type="hidden" name="action" value="addStock">
+
+        <label>Center:</label>
+
+        <select name="stockCenter">
+            <option value="C1">Central Warehouse (C1)</option>
+            <option value="C2">Downtown Center (C2)</option>
+        </select>
+
+        <label>Item Name:</label>
+
+        <input
+            type="text"
+            name="stockItemName"
+            placeholder="e.g. Rice (kg)"
+            required
+        >
+
+        <label>Quantity:</label>
+
+        <input
+            type="number"
+            name="stockQuantity"
+            min="1"
+            required
+        >
+
+        <button type="submit">
+            Add Stock
         </button>
 
     </form>
