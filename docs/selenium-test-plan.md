@@ -13,13 +13,17 @@ the unit tests in `FoodDistributionTrackerTest`.
 | 1 | Create a delivery | `createDelivery` | A dispatcher can record a delivery, sees the success message, the new row appears in the status table, and the summary counters increment. |
 | 2 | Search and filter deliveries | `searchAndFilterDeliveries` | Search narrows the table by item name, by status, and by delivery id, and returns zero rows for a term with no match. |
 | 3 | Update status and see inventory change | `updateDeliveryStatus` | A delivery moves `PENDING → IN_TRANSIT → DELIVERED`, and the destination center's C2 stock is credited only on `DELIVERED`. |
+| 4 | Add stock for a new item | `addStockForNewItem` | An item the warehouse has never held can be stocked, is listed with the quantity added, is not confused with a delivery, and becomes deliverable so it can reach the destination. |
 
 ## Out of scope
 
 - Cross-browser matrix. The suite runs in headless Chrome only.
+- Validation messages. Asserting on exact rejection wording would couple the tests
+  to the strings, so the four rejection paths are verified by hand instead. See
+  `docs/srs.md` §6.4.
 - Load, performance, and security testing.
-- Negative paths that are not reachable through the UI (for example, an
-  insufficient-stock delivery, which is covered at the service layer).
+- Negative paths covered at the service layer rather than the UI, such as an
+  insufficient-stock delivery.
 
 ## Environment
 
@@ -74,3 +78,9 @@ fixed while building this suite:
 
 Delivery rows are rendered from a `HashMap`, so their order is not guaranteed.
 Tests select rows by delivery id rather than by position.
+
+A center has one inventory row per item. Once stock for several items exists,
+asserting on a center's *first* row silently depends on sort order, so
+`inventoryText` joins every row belonging to that center, and `inventoryItemRow`
+pins an assertion to one specific item. Without this, adding a second item made
+two unrelated tests fail.

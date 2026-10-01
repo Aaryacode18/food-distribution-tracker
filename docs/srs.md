@@ -31,7 +31,7 @@ recorded as limitations in `docs/user-stories-and-backlog.md`.
 | **Distribution centre** | A location holding food stock. Identified by an id and a display name. |
 | **Delivery** | A shipment of a quantity of one item between two centres. |
 | **Delivery status** | Where a delivery is in its lifecycle: `PENDING`, `IN_TRANSIT`, or `DELIVERED`. |
-| **Warehouse (C1)** | Central Warehouse. The source. Seeded with 500 kg of Rice. |
+| **Warehouse (C1)** | Central Warehouse. The source. Seeded with opening stock: Rice 500, Wheat 300, Sugar 200, Oil 150, Salt 100. |
 | **Downtown Centre (C2)** | The destination. |
 
 ### 1.4 Reference
@@ -84,7 +84,12 @@ All users are trusted staff. No authentication is required in this version.
 | FR-1.3 | The system shall report the stock level for a centre and item. | `testAddAndGetStock` |
 | FR-1.4 | The system shall report all stock held by one centre. | Live inventory table |
 | FR-1.5 | A centre and item with no recorded stock shall report a level of zero. | `testAddAndGetStock` |
-| FR-1.6 | On first use in a session, the system shall seed Central Warehouse (C1) with 500 kg of Rice. | First page load |
+| FR-1.6 | On first use in a session, the system shall seed Central Warehouse (C1) with opening stock: Rice 500, Wheat 300, Sugar 200, Oil 150, Salt 100. | First page load |
+| FR-1.7 | The system shall allow a user to add stock to a chosen center for a named item. | `addStockForNewItem` (Selenium) |
+| FR-1.8 | Adding stock for an item the center does not hold shall create that item at the center. | `addStockForNewItem` (Selenium) |
+| FR-1.9 | Adding stock for an item the center already holds shall accumulate. | `testAddStockAccumulates` |
+| FR-1.10 | Adding stock shall not create a delivery or alter any delivery status. | `addStockForNewItem` (Selenium) |
+| FR-1.11 | An item added via FR-1.7 shall become deliverable. | `addStockForNewItem` (Selenium) |
 
 ### 3.2 Delivery creation
 
@@ -109,6 +114,9 @@ All users are trusted staff. No authentication is required in this version.
 | FR-3.4 | If the quantity exceeds the warehouse stock for that item, the system shall reject the input and display a message naming the item and the available quantity. | `index.jsp` |
 | FR-3.5 | In every rejection case no delivery shall be created and the page shall still render. | `index.jsp` |
 | FR-3.6 | The system shall trim leading and trailing whitespace from the item name before use. | `index.jsp` |
+| FR-3.7 | When adding stock, an unrecognized center shall be rejected. | Verified by hand; see §6.4 |
+| FR-3.8 | When adding stock, a blank item name, a non-numeric quantity, or a non-positive quantity shall be rejected, using the same wording as delivery creation. | Verified by hand; see §6.4 |
+| FR-3.9 | A successful stock addition shall report the new total for that item. | `addStockForNewItem` (Selenium) |
 
 ### 3.4 Status transitions
 
@@ -233,7 +241,7 @@ All users are trusted staff. No authentication is required in this version.
 | Suite | Count | Command | Scope |
 |---|---|---|---|
 | Unit | 7 | `mvn test` | `FoodDistributionTracker` domain rules |
-| Browser | 3 | `mvn test -Pselenium` | Create, search/filter, status update and stock crediting |
+| Browser | 4 | `mvn test -Pselenium` | Create, search/filter, status update and stock crediting, add stock |
 
 ### 5.2 Requirement coverage by test
 
@@ -251,9 +259,10 @@ Unit tests, in declaration order:
 
 | Requirement group | Covered by |
 |---|---|
-| FR-1.1 – FR-1.6 | Unit 1, 2; FR-1.6 verified by first page load |
+| FR-1.1 – FR-1.11 | Unit 1, 2; browser `addStockForNewItem`; FR-1.6 by first page load |
 | FR-2.1 – FR-2.8 | Browser `createDelivery`; unit 3 |
 | FR-3.1 – FR-3.6 | **Not automated** — a gap. See §6.4 |
+| FR-3.7 – FR-3.9 | FR-3.9 by browser test; FR-3.7, FR-3.8 verified by hand only |
 | FR-4.1 – FR-4.6 | Unit 4, 7; browser `updateDeliveryStatus`; FR-4.4, FR-4.5 by code inspection |
 | FR-5.1 – FR-5.4 | Unit 4, 5; browser `updateDeliveryStatus` |
 | FR-6.1 – FR-6.3 | Browser `createDelivery`, `updateDeliveryStatus` |
@@ -302,10 +311,24 @@ as US-16 and it should be closed before that happens.
 
 ### 6.4 Validation requirements are not automated
 
-FR-3.1 to FR-3.6 are verified by reading the code, not by a test. The browser
-suite deliberately does not exercise invalid input, because asserting on
-rejection messages couples the tests to exact wording. This is a real coverage
-gap.
+FR-3.1 to FR-3.8 are verified by reading the code and by manual exercise of the
+running application, not by an automated test. The browser suite deliberately
+does not assert on invalid input, because asserting on rejection messages
+couples the tests to exact wording. This is a real coverage gap.
+
+The following were exercised by hand against the running application on
+Chrome, each producing the expected rejection message and leaving inventory
+unchanged:
+
+| Path | Input | Result |
+|---|---|---|
+| FR-3.7 | `stockCenter` outside `C1`/`C2` | `Choose a valid distribution center.` |
+| FR-3.8 | blank `stockItemName` | `Item name is required.` |
+| FR-3.8 | `stockQuantity` = `abc` | `Invalid quantity. Please enter a valid number.` |
+| FR-3.8 | `stockQuantity` = `-5` | `Quantity must be greater than 0.` |
+
+The successful paths were then confirmed end to end by the automated
+`addStockForNewItem` test.
 
 ### 6.5 No persistence
 

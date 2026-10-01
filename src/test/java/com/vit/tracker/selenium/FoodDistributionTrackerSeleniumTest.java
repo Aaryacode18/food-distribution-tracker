@@ -16,6 +16,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
@@ -44,7 +45,8 @@ import static org.junit.Assert.assertTrue;
  *
  * <p>Override the target URL with {@code -Dapp.url=...}. Each test method gets a
  * fresh browser, and the application stores state in the HTTP session, so every
- * test starts from the seeded state (C1 with 500 kg of Rice and no deliveries).
+ * test starts from the seeded state (C1 stocked with five staples and no
+ * deliveries).
  */
 public class FoodDistributionTrackerSeleniumTest {
 
@@ -219,6 +221,42 @@ public class FoodDistributionTrackerSeleniumTest {
                 tableText().contains("Completed"));
     }
 
+    /**
+     * Stock can be added for a centre, and an item that did not previously exist
+     * becomes newly deliverable.
+     *
+     * <p>This is what makes the application usable for more than the seeded
+     * item: without it, creating a delivery for anything the warehouse has not
+     * been stocked with fails with an insufficient-stock message.
+     */
+    @Test
+    public void addStockForNewItem() {
+        assertTrue("A seeded item should start stocked",
+                inventoryContains("Central Warehouse (C1)", "Rice (kg)"));
+        assertFalse("An unstocked item should not be listed yet",
+                inventoryText("Central Warehouse (C1)").contains("Lentils (kg)"));
+
+        addStock("C1", "Lentils (kg)", "80");
+
+        assertTrue("The new item should appear in the warehouse inventory",
+                inventoryText("Central Warehouse (C1)").contains("Lentils (kg)"));
+        assertEquals("The new item should show exactly the quantity added",
+                "Central Warehouse (C1) Lentils (kg) 80",
+                inventoryItemRow("Central Warehouse (C1)", "Lentils (kg)"));
+        assertEquals("Adding stock should not create a delivery",
+                "0,0,0,0", summary());
+
+        // The point of adding stock is that the item can then be shipped.
+        createDelivery("Lentils (kg)", "10");
+        assertEquals("The newly stocked item should be deliverable",
+                "1,1,0,0", summary());
+        advanceToInTransit();
+        advanceToDelivered();
+        assertEquals("The new item should reach the destination with the delivered amount",
+                "Downtown Center (C2) Lentils (kg) 10",
+                inventoryItemRow("Downtown Center (C2)", "Lentils (kg)"));
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /** Message Chrome uses when the node it is asked about has been discarded. */
@@ -347,6 +385,19 @@ public class FoodDistributionTrackerSeleniumTest {
         advanceDelivery("D1", "Mark IN_TRANSIT");
     }
 
+    /** Submits the Add Stock form and waits for the success message. */
+    private void addStock(String centerId, String item, String quantity) {
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("stockItemName")));
+        new Select(driver.findElement(By.name("stockCenter"))).selectByValue(centerId);
+        driver.findElement(By.name("stockItemName")).clear();
+        driver.findElement(By.name("stockItemName")).sendKeys(item);
+        driver.findElement(By.name("stockQuantity")).clear();
+        driver.findElement(By.name("stockQuantity")).sendKeys(quantity);
+        clickAndWaitForReload(
+                driver.findElement(By.xpath("//button[normalize-space(text())='Add Stock']")));
+        waitForMessage("New stock:");
+    }
+
     private void advanceToDelivered() {
         advanceDelivery("D1", "Mark DELIVERED");
     }
@@ -401,21 +452,40 @@ public class FoodDistributionTrackerSeleniumTest {
     }
 
     /**
-     * Returns the flattened text of the inventory row for a given center.
+     * Every inventory row belonging to a center, joined into one string.
      *
-     * <p>The row has a cell per column, so the center name and the stock value
-     * are not adjacent. Matching on the whole row rather than on one joined
-     * string keeps the assertion independent of the number of columns.
+     * <p>A center has one row per item, so matching on a single row is only
+     * valid while a center holds at most one item. Once stock for several items
+     * is added, all of the center's rows are joined so an assertion about the
+     * center does not silently depend on which row happens to come first.
      */
-    private String inventoryRow(String center) {
-        WebElement row = driver.findElement(By.xpath(
+    private String inventoryText(String center) {
+        StringBuilder joined = new StringBuilder();
+        for (WebElement row : driver.findElements(By.xpath(
                 "//h2[text()='Live Inventory']/following::table[1]"
-                        + "//tr[td[normalize-space()='" + center + "']]"));
-        return row.getText().replaceAll("\\s+", " ").trim();
+                        + "//tr[td[normalize-space()='" + center + "']]"))) {
+            joined.append(row.getText().replaceAll("\\s+", " ")).append(" ");
+        }
+        return joined.toString().trim();
     }
 
-    /** True when the given center's inventory row shows the given stock value. */
+    /**
+     * The single inventory row for a given center and item.
+     *
+     * <p>Prefer this over {@link #inventoryText(String)} when the assertion is
+     * about one specific item, so a value such as {@code 80} cannot be
+     * satisfied by a different item's stock level.
+     */
+    private String inventoryItemRow(String center, String item) {
+        return driver.findElement(By.xpath(
+                "//h2[text()='Live Inventory']/following::table[1]"
+                        + "//tr[td[normalize-space()='" + center + "']"
+                        + " and td[normalize-space()='" + item + "']]"))
+                .getText().replaceAll("\\s+", " ").trim();
+    }
+
+    /** True when any of the center's inventory rows shows the given text. */
     private boolean inventoryContains(String center, String stock) {
-        return inventoryRow(center).contains(stock);
+        return inventoryText(center).contains(stock);
     }
 }
