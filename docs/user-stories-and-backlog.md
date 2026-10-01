@@ -149,6 +149,24 @@ deployment if they fail,
 
 - **Implemented:** yes — see `docs/CI-REPORT.md`
 
+### US-21 — Add stock for an item
+**As a** dispatcher,
+**I want** to add stock to a center for any item,
+**so that** I can distribute items beyond the ones the application was seeded with.
+
+- **Priority:** Must have
+- **Acceptance criteria**
+  1. Given a center and an item name and quantity, the user can add stock.
+  2. An item the center does not yet hold is created at that center.
+  3. An item the center already holds accumulates rather than being replaced.
+  4. The message reports the new total for that item.
+  5. Adding stock creates no delivery and changes no delivery status.
+  6. An item added this way becomes deliverable immediately.
+  7. A blank item name, a non-numeric quantity, a non-positive quantity, and an
+     unrecognized center are each rejected with a message.
+
+- **Implemented:** yes — the *Add Stock* form, `addStock`, `addStockForNewItem` (Selenium)
+
 ---
 
 ## Part 3 — Initial backlog (before development)
@@ -173,6 +191,10 @@ Ordered by priority. MoSCoW: **M**ust, **S**hould, **C**ould, **W**on't.
 | US-14 | Decrement source stock on dispatch | S | **Deferred** |
 | US-15 | Export deliveries to CSV | C | **Deferred** |
 | US-16 | Escape untrusted output | M | **Deferred** |
+
+US-21 (add stock) was **not** in the initial backlog. It was added after
+development when the seeded single item proved to be the main thing limiting
+real use. It is recorded in Part 5 rather than backdated into this list.
 
 ---
 
@@ -256,6 +278,7 @@ was deliberately deferred.
 | US-07 | Search deliveries | S | |
 | US-08 | Auto build and test on commit | M | SCM poll every 2 min |
 | US-09 | Browser tests gate deployment | M | Staging context, promote on pass |
+| US-21 | Add stock for an item | M | Added after review. Closes the limitation that only the seeded item could be distributed |
 
 ### 5.2 New items discovered during development
 

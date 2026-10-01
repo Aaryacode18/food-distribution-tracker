@@ -72,17 +72,21 @@ java -cp target/classes com.vit.tracker.App
 
 ## Features
 
+- **Stock management** — add stock to any center for any item through the
+  *Add Stock* form. New items become immediately deliverable.
+- **Seeded staples** — a fresh session opens with `Rice (kg)` 500, `Wheat (kg)`
+  300, `Sugar (kg)` 200, `Oil (L)` 150, `Salt (kg)` 100 at `C1`.
 - **Data entry** — create a delivery from `C1` (Central Warehouse) to `C2`
-  (Downtown Center) for any item and quantity.
+  (Downtown Center) for any stocked item and quantity.
 - **Searchable dashboard** — filter the delivery table by ID, item, or status.
 - **Summary indicators** — Total / Pending / In Transit / Delivered counts.
 - **Status drill-down** — each delivery row has a button that advances
   `PENDING → IN_TRANSIT → DELIVERED`.
 - **Alert / exception view** — invalid quantity, non-positive quantity, blank
-  item name, and insufficient stock at the source center are all rejected with
-  a message.
+  item name, unknown center, and insufficient stock at the source center are all
+  rejected with a message.
 - **Live inventory** — rendered from real stock per center via
-  `getStockForCenter()`, with an empty-state row.
+  `getStockForCenter()`, sorted by item, with an empty-state row.
 
 Marking a delivery `DELIVERED` credits the quantity to the destination center's
 stock.
@@ -125,9 +129,9 @@ and needs neither a browser nor a running Tomcat:
 mvn test -Pselenium
 ```
 
-3 Selenium tests cover the three critical journeys: creating a delivery,
-searching and filtering deliveries, and updating status while watching the
-destination inventory update. They run headless in Chrome against the deployed
+4 Selenium tests cover the critical journeys: creating a delivery, searching
+and filtering deliveries, updating status while watching the destination
+inventory update, and adding stock for an item that did not previously exist. They run headless in Chrome against the deployed
 application, and capture a screenshot on failure. See
 [`docs/selenium-test-plan.md`](docs/selenium-test-plan.md) for the full plan.
 
@@ -181,7 +185,6 @@ job UI once.
   the session expires.
 - Stock is not deducted from the source center when a delivery is created, so
   warehouse totals never decrease.
-- There is no "Add Stock" form, so only the seeded `Rice (kg)` item can exist.
 - `search`, `message`, and `itemName` are written to the page without HTML
   escaping, so a value containing markup is rendered as markup. Not exploitable
   today because all input is trusted and coordinator-entered, but it must be

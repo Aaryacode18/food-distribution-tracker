@@ -17,14 +17,15 @@ second tab to the Jenkins job before you begin, because you will need it at step
 
 ## Step 1 — Open on the empty state (30s)
 
-The app opens showing **Delivery Summary: 0 / 0 / 0 / 0** and **Live
-Inventory: Central Warehouse (C1), Rice (kg), 500**.
+The app opens showing **Delivery Summary: 0 / 0 / 0 / 0** and a **Live
+Inventory** at the warehouse holding five staples: `Oil (L) 150`,
+`Rice (kg) 500`, `Salt (kg) 100`, `Sugar (kg) 200`, `Wheat (kg) 300`.
 
-> "A warehouse starts with 500 kg of rice. Everything I do now is tracked from
+> "A warehouse stocked with five staples. Everything I do now is tracked from
 > this one screen."
 
-Point out the four sections: Create Delivery, Delivery Summary, Live
-Inventory, Delivery Status. Note there is no navigation — one screen.
+Point out the sections: **Add Stock**, **Create Delivery**, Delivery Summary,
+Live Inventory, Delivery Status. Note there is no navigation — one screen.
 
 ---
 
@@ -43,7 +44,34 @@ And the counts change to **1 / 1 / 0 / 0**. A row `D1 · C1 → C2 · Rice (kg) 
 
 ---
 
-## Step 3 — Show input validation (30s)
+## Step 3 — Add a brand new item (45s)
+
+Use the **Add Stock** form: Center `Central Warehouse (C1)`, Item Name
+`Lentils (kg)`, Quantity `80`, click **Add Stock**.
+
+> Added 80 of Lentils (kg) at C1. New stock: 80.
+
+`Lentils (kg)` now appears in Live Inventory, and the summary is still
+`0 / 0 / 0 / 0` — adding stock is not a delivery.
+
+> "That's what makes the app usable for anything the warehouse happens to
+> handle. Before this, only the seeded item could be shipped and anything else
+> failed with 'insufficient stock: only 0'."
+
+## Step 4 — Ship the new item (30s)
+
+In **Create Delivery**, item `Lentils (kg)`, quantity `10`, click **Create
+Delivery**. It is accepted, because it is now stocked.
+
+> "Add stock, then ship it. Two steps, and the second one would have failed
+> before."
+
+Click **Mark IN_TRANSIT**, then **Mark DELIVERED**. `Lentils (kg) 10` now
+appears under Downtown Center (C2).
+
+> "The item I just invented travelled the whole lifecycle."
+
+## Step 5 — Show input validation (30s)
 
 Try quantity `9999` and click **Create Delivery**.
 
@@ -62,44 +90,49 @@ Try quantity `abc`:
 
 ---
 
-## Step 4 — Move it to in-transit (30s)
+## Step 6 — Move it to in-transit (30s)
 
 On row **D1**, click **Mark IN_TRANSIT**.
 
 > Delivery D1 updated to IN_TRANSIT.
 
-Counts become **1 / 0 / 1 / 0**. The button changes to **Mark DELIVERED**.
+Counts become **2 / 0 / 1 / 1** (D1 in transit; D2 already delivered in step 4).
+The button changes to **Mark DELIVERED**.
 
-**Point at Live Inventory now** — C2 is still 0.
+**Point at Live Inventory** — C2 holds `Lentils (kg) 10` but **no Rice at all**.
 
-> "This is the important bit. It's in transit, not delivered, and C2 still
-> shows nothing. Stock hasn't moved yet."
+> "This is the important bit. D1 is in transit, not delivered, and C2 still has
+> zero Rice. Stock hasn't moved for this delivery yet."
 
 ---
 
-## Step 5 — Deliver it and watch stock land (45s) — *the main event*
+## Step 7 — Deliver it and watch stock land (45s) — *the main event*
 
 Click **Mark DELIVERED**.
 
 > Delivery D1 updated to DELIVERED.
 
-Counts become **1 / 0 / 0 / 1**. And **Live Inventory** now shows Downtown
+Counts become **2 / 0 / 0 / 2**. And **Live Inventory** now shows Downtown
 Centre (C2) holding **Rice (kg) 40**.
 
-> "One click. The destination stock went from 0 to 40 without anyone typing a
-> number. That's the loop between moving food and knowing you have it."
+> "One click. C2 went from zero Rice to forty without anyone typing a number.
+> That's the loop between moving food and knowing you have it."
 
 ---
 
-## Step 6 — Search (30s)
+## Step 8 — Search (30s)
 
-Create a second delivery: `Rice (kg)`, `15`. Leave it `PENDING`. Counts → **2 / 1 / 0 / 1**.
+Create a third delivery: `Rice (kg)`, `15`. Leave it `PENDING`. Counts → **3 / 1 / 0 / 2**.
 
-In the search box, type `PENDING` and click **Search**. Only D2 is listed.
+In the search box, type `PENDING` and click **Search**. Only D3 is listed.
 
 > "Searching by status."
 
-Clear, then search `D1`. Only D1.
+Clear, then search `Lentils`. Only D2.
+
+> "Searching by item name — including the item I invented in step 3."
+
+Search `D1`. Only D1.
 
 > "Searching by id."
 
@@ -111,7 +144,7 @@ Click **Clear**.
 
 ---
 
-## Step 7 — The part that matters: the build gate (90s)
+## Step 9 — The part that matters: the build gate (90s)
 
 Switch to the Jenkins tab. Open **Build History**.
 
@@ -133,7 +166,7 @@ the previous build.
 
 ---
 
-## Step 8 — Prove it's not manual (60s) — optional but strong
+## Step 10 — Prove it's not manual (60s) — optional but strong
 
 Make a trivial commit on `main` and wait about two minutes without touching
 Jenkins.

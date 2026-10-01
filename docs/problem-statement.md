@@ -56,6 +56,7 @@ closes the loop between movement and inventory.
 
 ### In scope
 
+- Add stock to a centre for any item, including items that did not previously exist
 - Record a delivery of a quantity of an item from the warehouse to a centre
 - Give each delivery an identifier so it can be referred to later
 - Advance a delivery through its lifecycle one step at a time
