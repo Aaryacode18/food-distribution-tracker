@@ -1,0 +1,107 @@
+---
+# Configures a target node to run the Food Distribution Tracker.
+#
+# What it guarantees, in order:
+#   1. the packages, user, folders and files the application needs exist
+#   2. the requested release is the one deployed
+#   3. Tomcat is enabled and running
+#   4. the application answers over HTTP
+#
+# Idempotent: running it twice changes nothing the second time. Select an
+# older release (rollback) with:
+#   ansible-playbook site.yml -e release_version=1.3.0
+
+- name: Configure the Food Distribution Tracker node
+  hosts: fdt_nodes
+  vars:
+    app_user: fdt
+    app_root: /opt/food-distribution-tracker
+    app_context: food-distribution-tracker
+    release_version: "1.4.0"
+    tomcat_service: tomcat10
+    tomcat_webapps: /var/lib/tomcat10/webapps
+    node_http_port: 8080
+
+  tasks:
+    - name: Refresh the apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install the packages the application needs
+      ansible.builtin.apt:
+        name:
+          - openjdk-21-jre-headless   # the app is compiled for Java 21
+          - tomcat10                  # serves the JSP on port {{ node_http_port }}
+          - curl                      # used for health checks on the node
+        state: present
+
+    - name: Create the service account for the application
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        system: true
+        home: "{{ app_root }}"
+        create_home: false
+        shell: /usr/sbin/nologin
+
+    - name: Create the release directory
+      ansible.builtin.file:
+        path: "{{ app_root }}/releases"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+
+    - name: "Store release {{ release_version }} in the release history"
+      ansible.builtin.copy:
+        src: "files/releases/food-distribution-tracker-{{ release_version }}.war"
+        dest: "{{ app_root }}/releases/food-distribution-tracker-{{ release_version }}.war"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+
+    - name: "Deploy release {{ release_version }} as the running webapp"
+      ansible.builtin.copy:
+        src: "files/releases/food-distribution-tracker-{{ release_version }}.war"
+        dest: "{{ tomcat_webapps }}/{{ app_context }}.war"
+        owner: tomcat
+        group: tomcat
+        mode: "0644"
+      notify: Restart tomcat
+
+    - name: Enable Tomcat at boot and make sure it is running
+      ansible.builtin.systemd:
+        name: "{{ tomcat_service }}"
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    # Only runs when a task above reported a change - which on a second,
+    # unchanged run it does not, and that is what keeps the run idempotent.
+    - name: Restart tomcat
+      ansible.builtin.systemd:
+        name: "{{ tomcat_service }}"
+        state: restarted
+
+# The check lives in its own play on purpose: handlers (the Tomcat restart
+# above) flush at the end of the previous play, so by the time this runs the
+# application has been redeployed if a deployment happened at all.
+- name: Verify the application answers
+  hosts: fdt_nodes
+  vars:
+    app_context: food-distribution-tracker
+    # Checked from the controller: the container listens on 8080, the node
+    # publishes it on the host as 8083 (8080 is Jenkins, 8081 is Tomcat).
+    health_check_url: "http://localhost:8083/{{ app_context }}/"
+  tasks:
+    - name: Wait until the application answers
+      ansible.builtin.uri:
+        url: "{{ health_check_url }}"
+        status_code: 200
+      delegate_to: localhost
+      become: false
+      register: health
+      retries: 15
+      delay: 2
+      until: health.status == 200
