@@ -16,7 +16,17 @@ pipeline {
         string(name: 'JAVA_HOME_PATH', defaultValue: '/Library/Java/JavaVirtualMachines/jdk-22.jdk/Contents/Home',
                description: 'JDK used to run Maven')
         booleanParam(name: 'RUN_SELENIUM', defaultValue: true,
-               description: 'Run the Selenium browser suite against the staged build')
+                description: 'Run the Selenium browser suite against the staged build')
+        booleanParam(name: 'RUN_DOCKER', defaultValue: true,
+                description: 'Build, publish and run a container after the tests pass')
+        string(name: 'DOCKER_REGISTRY', defaultValue: 'localhost:5001',
+                description: 'Registry the versioned image is pushed to (local registry:2 on 5001)')
+        string(name: 'DOCKER_IMAGE', defaultValue: 'food-distribution-tracker',
+                description: 'Image name, also used as the app context path inside the container')
+        string(name: 'CONTAINER_NAME', defaultValue: 'food-tracker-ci',
+                description: 'Name of the container the pipeline deploys')
+        string(name: 'CONTAINER_PORT', defaultValue: '8082',
+                description: 'Host port the container publishes (8080 is Jenkins, 8081 is host Tomcat)')
     }
     environment {
         JAVA_HOME = "${params.JAVA_HOME_PATH}"
@@ -98,6 +108,71 @@ pipeline {
                 sh """
                 sleep 8
                 curl --fail ${env.APP_URL}
+                """
+            }
+        }
+        // Everything below runs only after the browser gate is green, so a
+        // container can never be published or started from a build that the
+        // tests rejected.
+        stage('Docker Build') {
+            when {
+                expression { return params.RUN_DOCKER }
+            }
+            steps {
+                echo "Building versioned image ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE}:build-${env.BUILD_NUMBER}"
+                sh """
+                docker build \
+                    -t ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE}:build-${env.BUILD_NUMBER} \
+                    -t ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE}:latest \
+                    .
+                """
+            }
+        }
+        stage('Docker Publish') {
+            when {
+                expression { return params.RUN_DOCKER }
+            }
+            steps {
+                echo "Pushing image tags to ${params.DOCKER_REGISTRY}"
+                sh """
+                docker push ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE}:build-${env.BUILD_NUMBER}
+                docker push ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE}:latest
+                """
+            }
+        }
+        stage('Docker Deploy') {
+            when {
+                expression { return params.RUN_DOCKER }
+            }
+            steps {
+                echo "Replacing ${params.CONTAINER_NAME} with build ${env.BUILD_NUMBER} on port ${params.CONTAINER_PORT}"
+                sh """
+                docker rm -f ${params.CONTAINER_NAME} 2>/dev/null || true
+                docker run -d --name ${params.CONTAINER_NAME} \
+                    -p ${params.CONTAINER_PORT}:8080 \
+                    --restart=always \
+                    ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE}:build-${env.BUILD_NUMBER}
+                """
+            }
+        }
+        stage('Verify Container') {
+            when {
+                expression { return params.RUN_DOCKER }
+            }
+            steps {
+                echo "Checking the container at http://localhost:${params.CONTAINER_PORT}/${params.APP_CONTEXT}/"
+                sh """
+                for i in \$(seq 1 30); do
+                    if curl --fail --silent http://localhost:${params.CONTAINER_PORT}/${params.APP_CONTEXT}/ > /dev/null; then
+                        echo "Container answered after \${i} attempt(s)"
+                        docker ps --filter name=${params.CONTAINER_NAME} --format '{{.Names}} {{.Status}} {{.Ports}}'
+                        exit 0
+                    fi
+                    sleep 2
+                done
+                echo "Container never became healthy"
+                docker logs ${params.CONTAINER_NAME}
+                exit 1
                 """
             }
         }
