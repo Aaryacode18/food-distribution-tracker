@@ -1,0 +1,29 @@
+# Health check after provisioning (Task 14)
+
+$ curl -s -o /dev/null -w '%{http_code}' http://localhost:8083/food-distribution-tracker/
+200
+$ curl -s http://localhost:8083/food-distribution-tracker/ | grep '<title>'
+    <title>Food Distribution Tracker</title>
+$ docker exec fdt-node systemctl is-active tomcat10
+active
+$ docker exec fdt-node sha256sum /var/lib/tomcat10/webapps/food-distribution-tracker.war
+75fcff65ac26d8e72cd6be48a0bfe3430f515681baad3b454028dd9fca8abb2d  /var/lib/tomcat10/webapps/food-distribution-tracker.war
+$ shasum -a 256 ansible/files/releases/food-distribution-tracker-1.4.0.war   # same bytes
+75fcff65ac26d8e72cd6be48a0bfe3430f515681baad3b454028dd9fca8abb2d  ansible/files/releases/food-distribution-tracker-1.4.0.war
+$ docker exec fdt-node ls /opt/food-distribution-tracker/releases/
+food-distribution-tracker-1.4.0.war
+
+# After rollback from the broken 1.5.0 release (Task 14)
+
+$ curl -s -o /dev/null -w '%{http_code}' http://localhost:8083/food-distribution-tracker/
+200
+$ docker exec fdt-node sha256sum /var/lib/tomcat10/webapps/food-distribution-tracker.war
+75fcff65ac26d8e72cd6be48a0bfe3430f515681baad3b454028dd9fca8abb2d  /var/lib/tomcat10/webapps/food-distribution-tracker.war
+$ shasum -a 256 ansible/files/releases/food-distribution-tracker-1.4.0.war   # the stable release it must match
+75fcff65ac26d8e72cd6be48a0bfe3430f515681baad3b454028dd9fca8abb2d  ansible/files/releases/food-distribution-tracker-1.4.0.war
+$ docker exec fdt-node systemctl is-active tomcat10 && systemctl is-enabled tomcat10
+active
+enabled
+$ docker exec fdt-node ls /opt/food-distribution-tracker/releases/
+food-distribution-tracker-1.4.0.war
+food-distribution-tracker-1.5.0.war
