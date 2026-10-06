@@ -1,0 +1,38 @@
+
+PLAY [Configure the Food Distribution Tracker node] ****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [fdt-node]
+
+TASK [Refresh the apt cache] ***************************************************
+ok: [fdt-node]
+
+TASK [Install the packages the application needs] ******************************
+ok: [fdt-node]
+
+TASK [Create the service account for the application] **************************
+ok: [fdt-node]
+
+TASK [Create the release directory] ********************************************
+ok: [fdt-node]
+
+TASK [Store release 1.4.0 in the release history] ******************************
+ok: [fdt-node]
+
+TASK [Deploy release 1.4.0 as the running webapp] ******************************
+ok: [fdt-node]
+
+TASK [Enable Tomcat at boot and make sure it is running] ***********************
+ok: [fdt-node]
+
+PLAY [Verify the application answers] ******************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [fdt-node]
+
+TASK [Wait until the application answers] **************************************
+ok: [fdt-node -> localhost]
+
+PLAY RECAP *********************************************************************
+fdt-node                   : ok=10   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

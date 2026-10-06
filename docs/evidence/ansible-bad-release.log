@@ -1,0 +1,65 @@
+
+PLAY [Configure the Food Distribution Tracker node] ****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [fdt-node]
+
+TASK [Refresh the apt cache] ***************************************************
+ok: [fdt-node]
+
+TASK [Install the packages the application needs] ******************************
+ok: [fdt-node]
+
+TASK [Create the service account for the application] **************************
+ok: [fdt-node]
+
+TASK [Create the release directory] ********************************************
+ok: [fdt-node]
+
+TASK [Store release 1.5.0 in the release history] ******************************
+changed: [fdt-node]
+
+TASK [Deploy release 1.5.0 as the running webapp] ******************************
+changed: [fdt-node]
+
+TASK [Enable Tomcat at boot and make sure it is running] ***********************
+ok: [fdt-node]
+
+RUNNING HANDLER [Restart tomcat] ***********************************************
+changed: [fdt-node]
+
+PLAY [Verify the application answers] ******************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [fdt-node]
+
+TASK [Wait until the application answers] **************************************
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (14 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (13 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (12 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (11 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (10 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (9 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (8 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (7 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (6 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (5 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (4 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (3 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (2 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (1 retries left).
+FAILED - RETRYING: [fdt-node -> localhost]: Wait until the application answers (0 retries left).
+[ERROR]: Task failed: Module failed: Status code was 500 and not [200]: HTTP Error 500: 
+Origin: /Users/aaryapanchal/food-distribution-tracker/ansible/site.yml:98:7
+
+96     health_check_url: "http://localhost:8083/{{ app_context }}/"
+97   tasks:
+98     - name: Wait until the application answers
+         ^ column 7
+
+fatal: [fdt-node -> localhost]: FAILED! => {"attempts": 15, "changed": false, "connection": "close", "content_language": "en", "content_length": "2830", "content_type": "text/html;charset=utf-8", "date": "Tue, 06 Oct 2026 10:43:51 GMT", "elapsed": 0, "msg": "Status code was 500 and not [200]: HTTP Error 500: ", "redirected": false, "status": 500, "url": "http://localhost:8083/food-distribution-tracker/"}
+
+PLAY RECAP *********************************************************************
+fdt-node                   : ok=10   changed=3    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+
+PLAYBOOK_EXIT=2
