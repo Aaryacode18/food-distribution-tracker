@@ -1,0 +1,20 @@
+# Build output -- the image builds the WAR itself in stage 1.
+target/
+build/
+ant-build/
+.gradle/
+*.class
+gradle_error.log
+
+# Repository metadata and everything the build does not read.
+.git/
+.github/
+docs/
+*.md
+Dockerfile
+.dockerignore
+
+# Local IDE and OS noise.
+.idea/
+*.iml
+.DS_Store
