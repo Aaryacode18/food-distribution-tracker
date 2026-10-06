@@ -190,7 +190,7 @@ Ordered by priority. MoSCoW: **M**ust, **S**hould, **C**ould, **W**on't.
 | US-13 | Edit or cancel a delivery | C | **Deferred** |
 | US-14 | Decrement source stock on dispatch | S | **Deferred** |
 | US-15 | Export deliveries to CSV | C | **Deferred** |
-| US-16 | Escape untrusted output | M | **Deferred** |
+| US-16 | Escape untrusted output | M | **Done** — closed alongside US-21, which made stock item names reachable |
 
 US-21 (add stock) was **not** in the initial backlog. It was added after
 development when the seeded single item proved to be the main thing limiting
@@ -279,6 +279,7 @@ was deliberately deferred.
 | US-08 | Auto build and test on commit | M | SCM poll every 2 min |
 | US-09 | Browser tests gate deployment | M | Staging context, promote on pass |
 | US-21 | Add stock for an item | M | Added after review. Closes the limitation that only the seeded item could be distributed |
+| US-16 | Escape untrusted output | M | Closed by the same change. The Add Stock form made the stock item name attacker-reachable, so it stopped being theoretical |
 
 ### 5.2 New items discovered during development
 
@@ -297,7 +298,6 @@ and by running the pipeline, which is the point of a review.
 | ID | Item | Priority | Why deferred |
 |---|---|---|---|
 | US-10 | Persist data in a database | M | Session state is sufficient to demonstrate the workflow. Highest-value next item. |
-| US-16 | Escape untrusted output | M | Reflected XSS via `search`, `message`, and `itemName`. All current input is coordinator-entered and trusted, so this is not currently exploitable. **Should be done before any untrusted input is introduced.** |
 | US-14 | Decrement source stock on dispatch | S | Dispatch is planned rather than confirmed. Crediting only on arrival keeps the stock figure honest. Needs a product decision first. |
 | US-11 | Multiple source/destination centres | C | Requires the persistence work first. |
 | US-13 | Edit or cancel a delivery | C | Needs an audit trail to be trustworthy. |
@@ -310,15 +310,16 @@ Ordered by what unblocks the most:
 
 1. **US-10 Persistence** — session state means a Tomcat restart loses all data.
    This is the single biggest gap between a demo and something usable.
-2. **US-16 Escape untrusted output** — cheap to fix, removes a security finding.
-3. **US-14 Source stock on dispatch** — needs a product decision, then a test.
-4. **US-11 Multiple centres** — depends on 1 and 3.
-5. **US-12 Auth** — depends on 1.
+2. **US-14 Source stock on dispatch** — needs a product decision, then a test.
+3. **US-11 Multiple centres** — depends on 1 and 2.
+4. **US-12 Auth** — depends on 1.
+
+US-16 (escape untrusted output) was the previous number 2 and is now closed.
 
 ### 5.5 Risks carried forward
 
 | Risk | Impact | Mitigation |
 |---|---|---|
 | Session-scoped state lost on restart | All deliveries vanish | US-10 |
-| Reflected XSS | Becomes exploitable the moment untrusted input enters | US-16 |
+| Reflected XSS | **Closed** — every expression on the page is escaped | US-16, `userSuppliedOutputIsEscaped` |
 | Single JVM state | Cannot run two instances | Resolved by US-10 |

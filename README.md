@@ -129,9 +129,10 @@ and needs neither a browser nor a running Tomcat:
 mvn test -Pselenium
 ```
 
-4 Selenium tests cover the critical journeys: creating a delivery, searching
+5 Selenium tests cover the critical journeys: creating a delivery, searching
 and filtering deliveries, updating status while watching the destination
-inventory update, and adding stock for an item that did not previously exist. They run headless in Chrome against the deployed
+inventory update, adding stock for an item that did not previously exist, and
+confirming user-supplied output is escaped. They run headless in Chrome against the deployed
 application, and capture a screenshot on failure. See
 [`docs/selenium-test-plan.md`](docs/selenium-test-plan.md) for the full plan.
 
@@ -185,10 +186,6 @@ job UI once.
   the session expires.
 - Stock is not deducted from the source center when a delivery is created, so
   warehouse totals never decrease.
-- `search`, `message`, and `itemName` are written to the page without HTML
-  escaping, so a value containing markup is rendered as markup. Not exploitable
-  today because all input is trusted and coordinator-entered, but it must be
-  fixed before any untrusted input is introduced. Tracked as US-16.
 - Input validation lives in `index.jsp` rather than in the domain service, so
   the service would accept a negative quantity if called directly.
 - The Jenkins badge above reflects the status recorded in `docs/ci-status.json`,

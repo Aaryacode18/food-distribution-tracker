@@ -1,5 +1,48 @@
 <%@ page import="com.vit.tracker.*,java.util.Map,java.util.TreeMap" %>
 
+<%!
+    /**
+     * Escapes text before it is written into the page.
+     *
+     * <p>Every value written as a JSP expression is copied verbatim into the
+     * response. Most of them here are safe today because they are ints or
+     * server-generated ids, but three are attacker-influenced and are not
+     * distinguishable from the safe ones at a glance: the delivery item name,
+     * the stock item name, and the search query. Rather than leaving a
+     * standing invitation to treat some sites as special, the same escape is
+     * applied to every variable that reaches the page.
+     *
+     * <p>Element and attribute context are both covered, since the escaping is
+     * context-agnostic and both are quoted. Output is written to both the
+     * browser DOM and, on a search, back into the input's value attribute, so
+     * a single helper is used for both rather than two subtly different ones.
+     *
+     * <p>The delimiters that open and close a JSP expression are deliberately
+     * not written out above: they would terminate this declaration mid-comment
+     * and leave the remainder of the file as page text, which compiles to a
+     * broken class.
+     */
+    private String esc(Object value) {
+        if (value == null) {
+            return "";
+        }
+        String text = String.valueOf(value);
+        StringBuilder escaped = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            switch (ch) {
+                case '&':  escaped.append("&amp;");  break;
+                case '<':  escaped.append("&lt;");   break;
+                case '>':  escaped.append("&gt;");   break;
+                case '"':  escaped.append("&quot;"); break;
+                case '\'': escaped.append("&#39;");  break;
+                default:   escaped.append(ch);
+            }
+        }
+        return escaped.toString();
+    }
+%>
+
 <%
     FoodDistributionTracker tracker =
         (FoodDistributionTracker) session.getAttribute("tracker");
@@ -253,7 +296,7 @@
     </form>
 
     <div class="message">
-        <%= message %>
+        <%= esc(message) %>
     </div>
 
 
@@ -297,7 +340,7 @@
                 if (stock.isEmpty()) {
         %>
                     <tr>
-                        <td><%= c %></td>
+                        <td><%= esc(c) %></td>
                         <td><i>no items</i></td>
                         <td>0</td>
                     </tr>
@@ -308,8 +351,8 @@
                 for (Map.Entry<String, Integer> entry : stock.entrySet()) {
         %>
                     <tr>
-                        <td><%= c %></td>
-                        <td><%= entry.getKey() %></td>
+                        <td><%= esc(c) %></td>
+                        <td><%= esc(entry.getKey()) %></td>
                         <td><%= entry.getValue() %></td>
                     </tr>
         <%
@@ -325,7 +368,7 @@
 
     <form method="get">
         <label>Search Deliveries:</label>
-        <input type="text" name="search" value="<%= search %>" placeholder="ID, item or status">
+        <input type="text" name="search" value="<%= esc(search) %>" placeholder="ID, item or status">
         <button type="submit">Search</button>
         <a href="index.jsp">Clear</a>
     </form>
@@ -358,12 +401,12 @@
         %>
 
         <tr>
-            <td><%= d.getId() %></td>
-            <td><%= d.getSourceCenterId() %></td>
-            <td><%= d.getDestinationCenterId() %></td>
-            <td><%= d.getItemName() %></td>
+            <td><%= esc(d.getId()) %></td>
+            <td><%= esc(d.getSourceCenterId()) %></td>
+            <td><%= esc(d.getDestinationCenterId()) %></td>
+            <td><%= esc(d.getItemName()) %></td>
             <td><%= d.getQuantity() %></td>
-            <td><%= d.getStatus() %></td>
+            <td><%= esc(d.getStatus()) %></td>
             <td>
                 <%
                     DeliveryStatus[] flow = DeliveryStatus.values();
@@ -373,8 +416,8 @@
                 %>
                         <form method="post" style="display: inline;">
                             <input type="hidden" name="action" value="advance">
-                            <input type="hidden" name="deliveryId" value="<%= d.getId() %>">
-                            <button type="submit">Mark <%= flow[next] %></button>
+                            <input type="hidden" name="deliveryId" value="<%= esc(d.getId()) %>">
+                            <button type="submit">Mark <%= esc(flow[next]) %></button>
                         </form>
                 <%
                     } else {

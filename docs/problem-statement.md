@@ -113,7 +113,7 @@ work. See `docs/CI-REPORT.md` for the evidence.
 | Risk | Mitigation |
 |---|---|
 | State lost on restart | Documented limitation; persistence is the first backlog item. |
-| Unescaped output enables stored XSS | Known issue, recorded in the backlog; all current values are coordinator-entered and trusted. |
+| Unescaped output enables stored XSS | **Closed.** All page output is escaped, and `userSuppliedOutputIsEscaped` guards it. |
 | Browser tests become flaky and the gate is ignored | Flakes were root-caused and fixed rather than retried blindly; see `docs/selenium-test-plan.md`. |
 
 ## 8. Related documents

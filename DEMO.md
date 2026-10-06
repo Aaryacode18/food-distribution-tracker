@@ -187,10 +187,12 @@ The build appears and runs on its own.
 > glossed over."
 
 **"You mentioned an XSS issue — is it fixed?"**
-> "No, it's recorded as US-16. It's not exploitable today because all input is
-> coordinator-entered and trusted, but it becomes a stored XSS the moment
-> untrusted input enters, so it must be closed before that happens. It's in the
-> SRS §6.3."
+> "Yes. It was recorded as US-16 while input was still coordinator-entered, so
+> it was theoretical rather than exploitable. The Add Stock form changed that:
+> a stock item name reaches the inventory table, so it is now escaped at every
+> expression on the page. There's a browser test that drives a script tag
+> through the search box, the delivery form and the Add Stock form and checks
+> the raw markup never reaches the response. SRS §6.3."
 
 **"Doesn't the source warehouse stock stay at 540? You only shipped 55."**
 > "Yes. Source stock is credited on arrival but not debited on dispatch. That

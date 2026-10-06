@@ -257,6 +257,50 @@ public class FoodDistributionTrackerSeleniumTest {
                 inventoryItemRow("Downtown Center (C2)", "Lentils (kg)"));
     }
 
+    /**
+     * User input is escaped before it reaches the page.
+     *
+     * <p>Three values in this page originate from the request: the search
+     * query, the delivery item name and the stock item name. Any of them can
+     * carry markup, so each is written escaped. This asserts that the payload
+     * is absent from the source rather than pinning the exact entity sequence,
+     * which would couple the test to how the escaping is implemented.
+     *
+     * <p>The stock item name matters most here: until the Add Stock form
+     * existed only a coordinator could supply it, but it now reaches the
+     * inventory table through the same path a delivery item does.
+     */
+    @Test
+    public void userSuppliedOutputIsEscaped() {
+        String payload = "<script>alert('xss')</script>";
+
+        // Attribute context: the search query is echoed into the input's value.
+        search(payload);
+        String page = driver.getPageSource();
+        assertFalse("Raw script markup must not reach the response",
+                page.contains(payload));
+        assertTrue("The payload must be reflected, just escaped",
+                page.contains("&lt;script&gt;"));
+        assertEquals("The box must still display the original text",
+                payload, driver.findElement(By.name("search")).getAttribute("value"));
+
+        // Element context: a delivery item name is echoed into the message.
+        // The delivery cannot be created - the item is unstocked - but the name
+        // is still reflected, which is exactly the path that needs escaping.
+        submitDelivery(payload, "1");
+        page = driver.getPageSource();
+        assertFalse("Raw script markup must not reach the response",
+                page.contains(payload));
+
+        // Element context: a stock item name is echoed into the inventory table.
+        addStock("C1", payload, "5");
+        page = driver.getPageSource();
+        assertFalse("Raw script markup must not reach the response",
+                page.contains(payload));
+        assertTrue("The stocked item must appear, escaped",
+                page.contains("&lt;script&gt;"));
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /** Message Chrome uses when the node it is asked about has been discarded. */
@@ -364,6 +408,22 @@ public class FoodDistributionTrackerSeleniumTest {
         driver.findElement(By.name("quantity")).sendKeys(quantity);
         clickAndWaitForReload(driver.findElement(By.cssSelector("form button[type=submit]")));
         waitForMessage("Delivery created successfully");
+    }
+
+    /**
+     * Submits the create form and returns without asserting an outcome.
+     *
+     * <p>{@link #createDelivery} waits for a success message, which is wrong
+     * for a delivery the application is expected to reject.
+     */
+    private void submitDelivery(String item, String quantity) {
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("itemName")));
+        driver.findElement(By.name("itemName")).clear();
+        driver.findElement(By.name("itemName")).sendKeys(item);
+        driver.findElement(By.name("quantity")).clear();
+        driver.findElement(By.name("quantity")).sendKeys(quantity);
+        clickAndWaitForReload(driver.findElement(By.cssSelector("form button[type=submit]")));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("search")));
     }
 
     /**

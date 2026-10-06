@@ -14,6 +14,7 @@ the unit tests in `FoodDistributionTrackerTest`.
 | 2 | Search and filter deliveries | `searchAndFilterDeliveries` | Search narrows the table by item name, by status, and by delivery id, and returns zero rows for a term with no match. |
 | 3 | Update status and see inventory change | `updateDeliveryStatus` | A delivery moves `PENDING → IN_TRANSIT → DELIVERED`, and the destination center's C2 stock is credited only on `DELIVERED`. |
 | 4 | Add stock for a new item | `addStockForNewItem` | An item the warehouse has never held can be stocked, is listed with the quantity added, is not confused with a delivery, and becomes deliverable so it can reach the destination. |
+| 5 | Escapes user-supplied output | `userSuppliedOutputIsEscaped` | A `<script>` payload passed as the search term, the delivery item name and the stock item name reaches the response escaped in all three cases, and the search box still displays the original text. |
 
 ## Out of scope
 
@@ -21,7 +22,10 @@ the unit tests in `FoodDistributionTrackerTest`.
 - Validation messages. Asserting on exact rejection wording would couple the tests
   to the strings, so the four rejection paths are verified by hand instead. See
   `docs/srs.md` §6.4.
-- Load, performance, and security testing.
+- Load and performance testing. Security testing is deliberately narrow: only
+  output escaping is covered, because that is the one finding US-16 was open
+  for. Authentication, CSRF and injection testing need features this application
+  does not have yet (US-12).
 - Negative paths covered at the service layer rather than the UI, such as an
   insufficient-stock delivery.
 

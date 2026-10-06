@@ -221,7 +221,7 @@ All users are trusted staff. No authentication is required in this version.
 
 | ID | Requirement | Status |
 |---|---|---|
-| NFR-5.1 | Untrusted output shall be HTML-escaped. | **Not met** — see §6.3 |
+| NFR-5.1 | Untrusted output shall be HTML-escaped. | Met — `esc()` in `index.jsp`; see §6.3 |
 | NFR-5.2 | Secrets shall not be committed to the repository. | Met |
 | NFR-5.3 | The session identifier shall be managed by the container. | Met — `HttpSession` |
 
@@ -241,7 +241,7 @@ All users are trusted staff. No authentication is required in this version.
 | Suite | Count | Command | Scope |
 |---|---|---|---|
 | Unit | 7 | `mvn test` | `FoodDistributionTracker` domain rules |
-| Browser | 4 | `mvn test -Pselenium` | Create, search/filter, status update and stock crediting, add stock |
+| Browser | 5 | `mvn test -Pselenium` | Create, search/filter, status update and stock crediting, add stock, output escaping |
 
 ### 5.2 Requirement coverage by test
 
@@ -301,13 +301,24 @@ weakens FR-4.6 as the only real service-layer guard, and it means the domain
 service would accept a negative quantity if called directly. Moving validation
 into the service is the correct fix and is on the backlog.
 
-### 6.3 Output is not escaped
+### 6.3 Output escaping (US-16)
 
-`search`, `message`, and `itemName` are written into the page without HTML
-escaping, so a value containing markup is rendered as markup. Current input is
-coordinator-entered and trusted, so this is not exploitable today, but it
-becomes a stored XSS vector the moment untrusted input is introduced. Tracked
-as US-16 and it should be closed before that happens.
+`search`, `message`, `itemName`, and the stock item name are now written
+through an `esc()` helper declared in `index.jsp`, which escapes `& < > "`.
+
+This was closed when the Add Stock form (US-21) introduced a stock item name
+that a non-coordinator could supply: that value reaches the inventory table, so
+it would have been stored XSS rather than a purely theoretical one.
+
+Two contexts are covered by the same helper, because both are quoted: element
+body (`message`, inventory and delivery cells) and attribute (`value` of the
+search input). The primitive int columns are left unescaped, since they cannot
+carry markup; every other expression on the page is escaped, so a new
+contributor does not have to judge case by case which sites are safe.
+
+Covered by `userSuppliedOutputIsEscaped`, which drives a `<script>` payload
+through all three reflection paths and asserts the raw markup is absent from
+the source rather than pinning a particular entity sequence.
 
 ### 6.4 Validation requirements are not automated
 
