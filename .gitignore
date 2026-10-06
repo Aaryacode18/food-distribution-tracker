@@ -5,3 +5,5 @@ ant-build/
 *.class
 .DS_Store
 gradle_error.log
+# Ansible release artifacts (rebuild commands are in docs/config-management.md)
+ansible/files/releases/
